@@ -239,6 +239,7 @@ def update_ip(apikey, second_level_domain, top_level_domain, dyn_password, frequ
         )
 
     while not ipconfig.allipscans:
+        print(ipconfig.allipscans)
         kthread_sleep.sleep(0.1)
     print(ipconfig.allipscans[f"{second_level_domain}.{top_level_domain}"])
 
@@ -288,7 +289,13 @@ def configure_ethernet_and_start_proxies(
     - port_start_proxy (int): Port where the proxy will start.
     """
     if iswindows:
-        update_ip(apikey, subdomain, domain, dyn_password, sleep_ip_update)
+        if apikey:
+            update_ip(apikey, subdomain, domain, dyn_password, sleep_ip_update)
+    if not apikey:
+        spli=(subdomain + domain).split(".")
+        subdomain = '.'.join(spli[:3])
+        domain = spli[-1]
+        ipconfig.allipscans[f"{subdomain}.{domain}"].append(f"{subdomain}.{domain}")
     forinterfaces, invokeservers = create_config_file(
         network_config_for_linux=get_linux_network_config(
             interfaces=interfaces,
@@ -306,7 +313,7 @@ def configure_ethernet_and_start_proxies(
     allthreads = []
     for mynamespace__portstart, i in zip(forinterfaces, invokeservers):
         try:
-            myip = ipconfig.allipscans[f"{subdomain}.{domain}"][-1][-1]
+            myip = ipconfig.allipscans[f"{subdomain}.{domain}"][-1]
         except Exception:
             myip = socket.gethostbyname(f"{subdomain}.{domain}")
         mynamespace, portstart = mynamespace__portstart
