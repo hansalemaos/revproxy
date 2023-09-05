@@ -1,9 +1,8 @@
-import json
 import os
+import socket
 import subprocess
 
 import kthread
-import requests
 from pfehler import pfehler
 import platform
 
@@ -112,7 +111,7 @@ def create_config_file(
 
 
 def get_linux_network_config(
-    interfaces=("enx344b50000000", "eth0"),
+    interfaces,
     networkprefix="nspace",
     virtualnetworkprefix="veth",
     ipprefix="192.168",
@@ -148,7 +147,10 @@ def get_linux_network_config(
 
 
 def start_subproc(ip, port, adapter_name, su_password):
-    print(f"ip netns exec {adapter_name} {linuxexe} -r {ip}:{port}".encode("utf-8"))
+    os.chmod(
+        linuxexe,
+        0o777,
+    )
     try:
         while True:
             try:
@@ -306,16 +308,7 @@ def configure_ethernet_and_start_proxies(
         try:
             myip = ipconfig.allipscans[f"{subdomain}.{domain}"][-1][-1]
         except Exception:
-            with requests.get(
-                "https://api.dynu.com/v2/dns",
-                headers={"accept": "application/json", "API-Key": apikey},
-            ) as rea:
-                (rea) = rea.content
-            myip = [
-                (x[1][0]["unicodeName"], x[1][0]["ipv4Address"])
-                for x in json.loads(rea).items()
-                if x[0] == "domains"
-            ][0][-1]
+            myip = socket.gethostbyname(f"{subdomain}.{domain}")
         mynamespace, portstart = mynamespace__portstart
         start_reverse_client_linux_win(
             supassword=su_password,

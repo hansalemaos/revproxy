@@ -2,4 +2,3 @@ dynuipv4update
 kthread
 kthread_sleep
 pfehler
-requests
